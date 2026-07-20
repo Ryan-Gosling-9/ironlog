@@ -1,13 +1,15 @@
-# IronLog APK guide
+# IronLog — exact design PWA
 
-This is a private offline PWA: workout, nutrition and progress data stays in the device browser.
+This is the production-ready build of the full IronLog reference design. It includes its daily check-in flow, Cut/Bulk mode, calorie and macro tracking, water logging, workout split editor, exercise history and PR feedback, rest timer, measurements, and progress charts. Data stays private in the device's browser storage.
 
-## Make the free Android APK
+## Update the GitHub repository
 
-1. Create a free public GitHub repository called `ironlog`.
-2. Upload every file in this folder to the repository root.
-3. In **Settings → Pages**, deploy from the `main` branch and the root folder. Open the HTTPS URL GitHub gives you.
-4. Visit [PWABuilder](https://www.pwabuilder.com/), enter that URL, select **Package for stores → Android**, and download the Android package it generates.
-5. Copy the APK to your Android phone and install it. You may need to permit installs from your browser/file manager once in Android settings.
+1. Open the `ironlog` repository on GitHub.
+2. Upload every file and folder from this folder **to the repository root**. Keep the `assets` folder intact.
+3. Replace existing files when GitHub asks.
+4. Commit the upload. GitHub Pages will publish the update automatically.
+5. Open `https://ryan-gosling-9.github.io/ironlog/` and refresh once. If an old app remains, close and reopen the tab/app so the service worker refreshes.
 
-The PWA can also be installed directly from Chrome using **Install app**.
+## APK
+
+After verifying the live site, open PWABuilder, enter the Pages URL, package for Android, then install the generated APK.
