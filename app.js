@@ -7,7 +7,7 @@
 const K = "ironlog-v3";
 const DEFAULTS = {
   tab: "today",
-  theme: "dark",
+  theme: "system",
   language: "en",
   water: 0,
   foods: [],
@@ -26,7 +26,9 @@ const save = () => { localStorage.setItem(K, JSON.stringify(S)); applyTheme(); s
 const sum = k => S.foods.reduce((n, x) => n + (+x[k] || 0), 0);
 const pct = (v, m) => Math.min(100, Math.round((v / m) * 100) || 0);
 const ring = (v, m, c, t) => `<span class="ring" style="--p:${pct(v, m)}%;--c:${c}"><b>${t}</b></span>`;
-const applyTheme = () => document.documentElement.setAttribute("data-theme", S.theme === "light" ? "light" : "dark");
+const systemPrefersDark = () => window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+const resolvedTheme = () => S.theme === "system" ? (systemPrefersDark() ? "dark" : "light") : (S.theme || "dark");
+const applyTheme = () => document.documentElement.setAttribute("data-theme", resolvedTheme() === "light" ? "light" : "dark");
 
 /* ============================== i18n ============================== */
 const TRANSLATIONS = {
@@ -50,7 +52,8 @@ const TRANSLATIONS = {
     bodyWeightKg: "Body weight (kg)", saveMeasurement: "Save measurement",
     yourGoals: "Your goals", saveGoals: "Save goals",
     modalAddFood: "Add food", modalAddSet: "Log a set", modalAddWeight: "Add weigh-in",
-    settings: "Settings", appearance: "Appearance", dark: "Dark", light: "Light",
+    settings: "Settings", appearance: "Appearance", dark: "Dark", light: "Light", system: "System",
+    nutritionGoals: "Nutrition goals", editGoals: "Edit goals",
     language: "Language", exercisePlan: "Exercise plan", newExercisePlaceholder: "New exercise name",
     cloudSync: "Cloud sync", signInGoogle: "Sign in with Google",
     cloudSyncDesc: "Sign in to back up your data to the cloud and restore it on any device.",
@@ -79,7 +82,8 @@ const TRANSLATIONS = {
     bodyWeightKg: "Вес тела (кг)", saveMeasurement: "Сохранить замер",
     yourGoals: "Твои цели", saveGoals: "Сохранить цели",
     modalAddFood: "Добавить еду", modalAddSet: "Записать подход", modalAddWeight: "Добавить взвешивание",
-    settings: "Настройки", appearance: "Оформление", dark: "Тёмная", light: "Светлая",
+    settings: "Настройки", appearance: "Оформление", dark: "Тёмная", light: "Светлая", system: "Системная",
+    nutritionGoals: "Цели по питанию", editGoals: "Изменить цели",
     language: "Язык", exercisePlan: "План упражнений", newExercisePlaceholder: "Название упражнения",
     cloudSync: "Синхронизация", signInGoogle: "Войти через Google",
     cloudSyncDesc: "Войди, чтобы сохранить данные в облаке и восстановить их на любом устройстве.",
@@ -108,7 +112,8 @@ const TRANSLATIONS = {
     bodyWeightKg: "Tana vazni (kg)", saveMeasurement: "O'lchovni saqlash",
     yourGoals: "Maqsadlaringiz", saveGoals: "Maqsadlarni saqlash",
     modalAddFood: "Ovqat qo'shish", modalAddSet: "Setni yozish", modalAddWeight: "Vazn qo'shish",
-    settings: "Sozlamalar", appearance: "Ko'rinish", dark: "Tungi", light: "Kunduzgi",
+    settings: "Sozlamalar", appearance: "Ko'rinish", dark: "Tungi", light: "Kunduzgi", system: "Tizim bo'yicha",
+    nutritionGoals: "Ovqatlanish maqsadlari", editGoals: "Maqsadlarni tahrirlash",
     language: "Til", exercisePlan: "Mashqlar rejasi", newExercisePlaceholder: "Yangi mashq nomi",
     cloudSync: "Bulutga sinxronlash", signInGoogle: "Google orqali kirish",
     cloudSyncDesc: "Maʼlumotlaringizni bulutda zaxiralash va istalgan qurilmada tiklash uchun kiring.",
@@ -137,13 +142,6 @@ function header() {
 function macro(n, v, m, c) {
   return `<article class="macro"><span>${n}</span><b>${v}g</b><i><em style="width:${pct(v, m)}%;background:${c}"></em></i><small>${m}g</small></article>`;
 }
-function fab() {
-  const action = { today: "water", train: "set", food: "food", progress: "weight" }[S.tab];
-  const exArg = S.tab === "train" ? ` data-ex="${safe(S.plan[0] || "")}"` : "";
-  const icon = { today: "💧", train: "+", food: "+", progress: "+" }[S.tab];
-  return `<button class="fab" data-a="${action}"${exArg}>${icon}</button>`;
-}
-
 function today() {
   const c = sum("cal"), p = sum("protein"), r = sum("carbs"), f = sum("fat"), done = S.checks[now()];
   return `<div class="stack">
@@ -154,7 +152,7 @@ function today() {
       <article class="card stat"><div><span>${t("water")}</span><b>${(S.water / 1000).toFixed(1)}<small> L</small></b><small>${t("of")} ${(S.targets.water / 1000).toFixed(1)} L</small></div>${ring(S.water, S.targets.water, "var(--accent-2)", `${(S.water / 1000).toFixed(1)}L`)}</article>
     </div>
     <div class="macros">${macro(t("protein").split(" ")[0], p, S.targets.protein, "#ff607a")}${macro(t("carbs").split(" ")[0], r, S.targets.carbs, "#ffb44f")}${macro(t("fat").split(" ")[0], f, S.targets.fat, "#776ff0")}</div>
-    <article class="card quick"><i>💧</i><div><b>${t("quickWater")}</b><small>${t("addGlass")}</small></div><button class="round" data-a="water">+250</button></article>
+    <article class="card quick"><i>💧</i><div><b>${t("quickWater")}</b><small>${t("addGlass")}</small></div><button class="pill-btn" data-a="water">+250 ml</button></article>
   </div>`;
 }
 function train() {
@@ -230,12 +228,14 @@ function settingsModal() {
     ${bodyHeader(t("settings"))}
     <div class="stack">
       <div><label>${t("appearance")}</label><div class="optrow">
-        <button class="opt ${S.theme !== "light" ? "active" : ""}" data-a="theme" data-v="dark">${t("dark")}</button>
+        <button class="opt ${S.theme === "system" ? "active" : ""}" data-a="theme" data-v="system">${t("system")}</button>
         <button class="opt ${S.theme === "light" ? "active" : ""}" data-a="theme" data-v="light">${t("light")}</button>
+        <button class="opt ${S.theme === "dark" ? "active" : ""}" data-a="theme" data-v="dark">${t("dark")}</button>
       </div></div>
       <div><label>${t("language")}</label><div class="optrow">
         ${langs.map(([code, lab]) => `<button class="opt ${S.language === code ? "active" : ""}" data-a="lang" data-v="${code}">${lab}</button>`).join("")}
       </div></div>
+      <div><label>${t("nutritionGoals")}</label><button class="ghost" data-a="goals" style="width:100%">${t("editGoals")}</button></div>
       <div><label>${t("exercisePlan")}</label><div class="stack">
         ${S.plan.map((p, i) => `<div class="planrow"><span>${safe(p)}</span><button data-a="rmex" data-i="${i}">×</button></div>`).join("")}
         <div class="addplan"><input id="new-ex" placeholder="${t("newExercisePlaceholder")}"><button class="round" data-a="addex">+</button></div>
@@ -250,7 +250,7 @@ function settingsModal() {
 function render() {
   applyTheme();
   const view = { today, train, food, progress }[S.tab]();
-  $.innerHTML = `<div class="liquid-bg"></div><section class="shell">${header()}<main class="page">${view}</main>${fab()}${nav()}</section>${M}`;
+  $.innerHTML = `<div class="liquid-bg"></div><section class="shell">${header()}<main class="page">${view}</main>${nav()}</section>${M}`;
   document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; save(); render(); });
   document.querySelectorAll("[data-a]").forEach(b => b.onclick = e => act(e, b));
   document.querySelectorAll("form").forEach(f => f.onsubmit = submit);
@@ -383,6 +383,11 @@ async function pushStateToCloud() {
 }
 
 /* ============================== BOOT ============================== */
+if (window.matchMedia) {
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  const onSystemChange = () => { if (S.theme === "system") { applyTheme(); render(); } };
+  (mq.addEventListener ? mq.addEventListener("change", onSystemChange) : mq.addListener(onSystemChange));
+}
 applyTheme();
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
 initFirebase();
