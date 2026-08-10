@@ -28,7 +28,7 @@ const pct = (v, m) => Math.min(100, Math.round((v / m) * 100) || 0);
 const ring = (v, m, c, t) => `<span class="ring" style="--p:${pct(v, m)}%;--c:${c}"><b>${t}</b></span>`;
 const systemPrefersDark = () => window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
 const resolvedTheme = () => S.theme === "system" ? (systemPrefersDark() ? "dark" : "light") : (S.theme || "dark");
-const applyTheme = () => document.documentElement.setAttribute("data-theme", resolvedTheme() === "light" ? "light" : "dark");
+const applyTheme = () => { if (resolvedTheme() === "dark") document.documentElement.setAttribute("data-theme", "dark"); else document.documentElement.removeAttribute("data-theme"); };
 
 /* ============================== i18n ============================== */
 const TRANSLATIONS = {
@@ -250,7 +250,7 @@ function settingsModal() {
 function render() {
   applyTheme();
   const view = { today, train, food, progress }[S.tab]();
-  $.innerHTML = `<div class="liquid-bg"></div><section class="shell">${header()}<main class="page">${view}</main>${nav()}</section>${M}`;
+  $.innerHTML = `<section class="shell">${header()}<main class="page">${view}</main>${nav()}</section>${M}`;
   document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; save(); render(); });
   document.querySelectorAll("[data-a]").forEach(b => b.onclick = e => act(e, b));
   document.querySelectorAll("form").forEach(f => f.onsubmit = submit);
