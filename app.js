@@ -52,7 +52,12 @@ const safe = x => String(x || "").replace(/[&<>'"]/g, c => ({ "&": "&amp;", "<":
 const save = () => { localStorage.setItem(K, JSON.stringify(S)); applyTheme(); scheduleCloudPush(); };
 const systemPrefersDark = () => window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
 const resolvedTheme = () => S.theme === "system" ? (systemPrefersDark() ? "dark" : "light") : (S.theme || "light");
-const applyTheme = () => { if (resolvedTheme() === "dark") document.documentElement.setAttribute("data-theme", "dark"); else document.documentElement.removeAttribute("data-theme"); };
+const applyTheme = () => {
+  const dark = resolvedTheme() === "dark";
+  if (dark) document.documentElement.setAttribute("data-theme", "dark"); else document.documentElement.removeAttribute("data-theme");
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", dark ? "#131019" : "#e9e2fb");
+};
 
 function foodsToday() { return S.foods[todayKey] || []; }
 function setsToday() { return S.sets[todayKey] || {}; }
@@ -536,3 +541,12 @@ applyTheme();
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
 initFirebase();
 render();
+
+/* Back button feels native: close a sheet or return to Today before actually
+   exiting the app, instead of every back-press quitting immediately. */
+history.pushState({ app: true }, "");
+window.addEventListener("popstate", () => {
+  if (M) { M = ""; render(); history.pushState({ app: true }, ""); return; }
+  if (S.tab !== "today") { S.tab = "today"; save(); render(); history.pushState({ app: true }, ""); return; }
+  // already at home with nothing open — let this back-press exit normally
+});
