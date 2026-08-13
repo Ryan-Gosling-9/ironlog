@@ -246,7 +246,7 @@ function strengthTrend() {
 /* ============================== NAV ============================== */
 function bottomNav() {
   const tabs = [["today", "📅", "Today"], ["train", "🏋", "Train"], ["food", "🍴", "Food"], ["progress", "📈", "Progress"]];
-  return `<nav class="bottom-nav">${tabs.map(([id, i, n]) => `<button class="${S.tab === id ? "active" : ""}" data-tab="${id}"><i>${i}</i>${n}</button>`).join("")}</nav>`;
+  return `<div class="nav-outer"><nav class="bottom-nav">${tabs.map(([id, i, n]) => `<button class="${S.tab === id ? "active" : ""}" data-tab="${id}"><i>${i}</i>${n}</button>`).join("")}</nav></div>`;
 }
 
 /* ============================== MODALS ============================== */
