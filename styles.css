@@ -195,4 +195,38 @@ button,input{font:inherit;color:inherit}
 .addex-btn{border:1px dashed var(--card-border);border-radius:12px;padding:11px;width:100%;background:none;color:var(--muted);font-weight:700;cursor:pointer;margin-top:2px}
 
 @media(max-width:360px){.statgrid,.macrorow{gap:8px}}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ============================== animations ============================== */
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sheetUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shadeFade{from{opacity:0}to{opacity:1}}
+@keyframes panelGrow{from{opacity:0;transform:scaleY(.88);transform-origin:top}to{opacity:1;transform:scaleY(1)}}
+@keyframes popIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+@keyframes bump{0%{transform:scale(1)}45%{transform:scale(1.22)}100%{transform:scale(1)}}
+@keyframes ringPulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+@keyframes checkPop{0%{transform:scale(.9);opacity:.6}60%{transform:scale(1.03)}100%{transform:scale(1);opacity:1}}
+
+.tab-enter{animation:fadeSlideUp .3s cubic-bezier(.22,.9,.32,1) both}
+.tab-enter .stack>*{animation:fadeSlideUp .36s cubic-bezier(.22,.9,.32,1) both}
+.tab-enter .stack>*:nth-child(1){animation-delay:.02s}
+.tab-enter .stack>*:nth-child(2){animation-delay:.06s}
+.tab-enter .stack>*:nth-child(3){animation-delay:.10s}
+.tab-enter .stack>*:nth-child(4){animation-delay:.14s}
+.tab-enter .stack>*:nth-child(5){animation-delay:.18s}
+.tab-enter .stack>*:nth-child(6){animation-delay:.21s}
+.tab-enter .stack>*:nth-child(n+7){animation-delay:.24s}
+
+.shade{animation:shadeFade .2s ease both}
+.sheet{animation:sheetUp .3s cubic-bezier(.22,.9,.32,1) both}
+.setpanel{animation:panelGrow .22s cubic-bezier(.22,.9,.32,1) both}
+.fab{animation:popIn .32s cubic-bezier(.34,1.56,.64,1) both}
+.streak.bump{animation:bump .4s ease}
+.water-ring.pulse{animation:ringPulse .35s ease}
+.confirm-btn.done{animation:checkPop .35s cubic-bezier(.22,.9,.32,1)}
+.exrow{transition:background-color .15s ease}
+.daycell .num{transition:background-color .2s ease,border-color .2s ease}
+.opt{transition:background-color .15s ease,color .15s ease}
+.moodrow button{transition:background-color .15s ease,color .15s ease,transform .12s ease}
+.moodrow button.active{transform:scale(1.04)}
+
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

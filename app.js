@@ -42,6 +42,8 @@ let S = Object.assign({}, D, JSON.parse(localStorage.getItem(K) || "{}"));
 S.plan = S.plan || DEFAULT_PLAN;
 let M = "";
 let openExercise = null;
+let streakBumpFlag = false;
+let waterBumpFlag = false;
 const $ = document.querySelector("#app");
 const pad = n => String(n).padStart(2, "0");
 const dkey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -71,6 +73,8 @@ function pct(v, m) { return Math.min(100, Math.round((v / m) * 100) || 0); }
 
 /* ============================== HEADER ============================== */
 function topbar() {
+  const streakClass = streakBumpFlag ? "streak bump" : "streak";
+  streakBumpFlag = false;
   return `<div class="topbar">
     <div class="logo-box">🏋️</div>
     <div class="brand"><b>IronLog</b><small>${S.phase === "cut" ? "Cutting phase" : "Bulking phase"}</small></div>
@@ -78,7 +82,7 @@ function topbar() {
       <button class="${S.phase === "cut" ? "active" : ""}" data-a="phase" data-v="cut">Cut</button>
       <button class="${S.phase === "bulk" ? "active" : ""}" data-a="phase" data-v="bulk">Bulk</button>
     </div>
-    <div class="streak">🔥 ${S.streak || 0}</div>
+    <div class="${streakClass}">🔥 ${S.streak || 0}</div>
     <button class="icon-btn" data-a="settings">⚙</button>
   </div>`;
 }
@@ -121,10 +125,12 @@ function statGrid() {
 }
 function waterCard() {
   const w = waterToday();
+  const ringClass = waterBumpFlag ? "water-ring pulse" : "water-ring";
+  waterBumpFlag = false;
   return `<article class="card watercard">
     <div class="whead"><h3>Water intake</h3><button class="icon-btn" data-a="water-minus">–</button></div>
     <div class="waterrow">
-      <div class="water-ring" style="--wp:${pct(w, S.targets.water)}%"><span>💧</span></div>
+      <div class="${ringClass}" style="--wp:${pct(w, S.targets.water)}%"><span>💧</span></div>
       <button class="water-add" data-a="water-plus">+ Add 250ml glass</button>
     </div>
   </article>`;
@@ -327,14 +333,17 @@ function editScheduleModal() {
 }
 
 /* ============================== RENDER (with focus preservation for text inputs) ============================== */
+let lastRenderedTab = null;
 function render() {
   applyTheme();
   const active = document.activeElement;
   const focusId = active && active.id ? active.id : null;
   const selStart = active && "selectionStart" in active ? active.selectionStart : null;
 
+  const tabChanged = lastRenderedTab !== S.tab;
+  lastRenderedTab = S.tab;
   const view = { today: todayTab, train: trainTab, food: foodTab, progress: progressTab }[S.tab]();
-  $.innerHTML = `<section class="shell">${topbar()}<main class="page">${view}</main>${bottomNav()}</section>${M}`;
+  $.innerHTML = `<section class="shell">${topbar()}<main class="page${tabChanged ? " tab-enter" : ""}">${view}</main>${bottomNav()}</section>${M}`;
 
   document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; save(); render(); });
   document.querySelectorAll("[data-a]").forEach(b => b.onclick = e => act(e, b));
@@ -365,14 +374,13 @@ function act(e, b) {
   if (a === "confirm-checkin") {
     const w = +(document.getElementById("ci-weight").value || 0);
     const mood = S._draftMood || (S.checkins[todayKey] && S.checkins[todayKey].mood);
-    if (!S.checkins[todayKey] && !S.streak) S.streak = 1;
-    else if (!S.checkins[todayKey]) S.streak = (S.streak || 0) + 1;
+    if (!S.checkins[todayKey]) { S.streak = (S.streak || 0) + 1; streakBumpFlag = true; }
     S.checkins[todayKey] = { weight: w || null, mood: mood || null };
     if (w) S.weights.push({ w, d: todayKey });
     S._draftWeight = null; S._draftMood = null;
     save(); render(); return;
   }
-  if (a === "water-plus") { S.water[todayKey] = Math.min(S.targets.water, (S.water[todayKey] || 0) + 250); save(); render(); return; }
+  if (a === "water-plus") { S.water[todayKey] = Math.min(S.targets.water, (S.water[todayKey] || 0) + 250); waterBumpFlag = true; save(); render(); return; }
   if (a === "water-minus") { S.water[todayKey] = Math.max(0, (S.water[todayKey] || 0) - 250); save(); render(); return; }
   if (a === "goto-train") { S.tab = "train"; S.selectedDay = todayDow; save(); render(); return; }
   if (a === "pickday-train") { S.selectedDay = b.dataset.v; S._search = ""; save(); render(); return; }
